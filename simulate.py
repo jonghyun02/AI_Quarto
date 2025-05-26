@@ -1,49 +1,26 @@
-# simulate_quarto.py
+# Updated simulate_quarto.py (no time limits for both P1 and P2)
 
 import numpy as np
 import sys, os, time, random
 import pandas as pd
 
 # 1) 모듈 로드 경로 추가
-sys.path.append(os.path.dirname(__file__))  # 현재 스크립트 폴더
+sys.path.append(os.path.dirname(__file__))
 
 import machines_p1 as m1
 import machines_p2 as m2
 
-# 2) P2의 sleep 제거, 디버그 출력 억제
+# 2) sleep 제거, 디버그 출력 억제
 time.sleep = lambda *_: None
 import builtins
 builtins_print = builtins.print
 builtins.print = lambda *a, **k: None  # 모든 print 무시
 
-# 3) MCTS search_actions 안전 패치 (자식 노드가 없을 때 랜덤 fallback)
-orig_search = m1.MCTS.search_actions
-def safe_search(self, for_place=False):
-    try:
-        return orig_search(self, for_place=for_place)
-    except ValueError:
-        if for_place:
-            moves = m1.get_place_actions(self.root_board)
-            return random.choice(moves)
-        else:
-            return random.choice(self.root_available)
-m1.MCTS.search_actions = safe_search
 
-# 4) P1을 빠르게 돌리기 위한 파생 클래스 (time_budget=0.001)
-class P1Fast(m1.P1):
-    def select_piece(self):
-        return m1.MCTS(self.board, self.available_pieces, time_budget=0.001).search_actions(for_place=False)
-    def place_piece(self, selected_piece):
-        return m1.MCTS(self.board, self.available_pieces,
-                       current_piece=selected_piece,
-                       time_budget=0.001).search_actions(for_place=True)
 
-# P2는 sleep 제거만 된 버전 사용
-class P2Fast(m2.P2):
-    pass
-
-P1Class = P1Fast
-P2Class = P2Fast
+# 4) P1과 P2 모두 원본 클래스 사용 (시간 제한 없음)
+P1Class = m1.P1
+P2Class = m2.P2
 
 def simulate_game():
     board = np.zeros((4,4), dtype=int)
@@ -71,7 +48,7 @@ def simulate_game():
 
 def main():
     results = {'P1 wins':0, 'P2 wins':0, 'Draws':0}
-    for _ in range(1000):
+    for _ in range(100):
         outcome = simulate_game()
         if outcome == 1:
             results['P1 wins'] += 1
