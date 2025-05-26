@@ -120,6 +120,8 @@ class Node:
         player = self.current_player
         while True:
             # 1) 선택 단계: piece 고르기
+            if sim_piece is None and not sim_avail:
+                return None
             if sim_piece is None:
                 sim_piece = random.choice(sim_avail)
                 sim_avail.remove(sim_piece)
